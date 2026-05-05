@@ -13,25 +13,9 @@ SQLAlchemy, PostgreSQL и Celery с Redis.
 - 🧵 Асинхронные задачи через Celery и Redis
 - 🧪 Unit тесты с использованием Pytest и httpx
 
-## 📸 Примеры работы
-
-### 🔐 Аутентификация
-
-![Login screen](docs/screenshots/login.png)
-
-### 🔍 Общий вид
-
-![Overview](docs/screenshots/overview-1.png)
-![Overview](docs/screenshots/overview-2.png)
-
-### 📦 Создание товара
-
-![Create product](docs/screenshots/create-product-1.png)
-![Create product](docs/screenshots/create-product-2.png)
-
 ## 🧰 Технологический стек
 
-- **Язык:** Python 3.11+
+- **Язык:** Python 3.12+
 - **Фреймворк:** FastAPI
 - **Асинхронность:** asyncio, httpx
 - **База данных:** PostgreSQL (через SQLAlchemy ORM)
@@ -133,8 +117,6 @@ brew services start redis  # macOS
 celery -A app.orders.worker.celery_app worker --loglevel=info
 
 ## 🧪 Запуск тестов
-
-```bash
 pytest
 ```
 
@@ -144,7 +126,9 @@ pytest
 
 ## 📬 **Контакты**
 
-откуда брал проект: 
-    Автор: Владислав Лахтионов  
-    GitHub: [vladelo-code](https://github.com/vladelo-code)  
+это форк проекта: 
+    
+    Автор: Владислав Лахтионов
+    GitHub: [vladelo-code](https://github.com/vladelo-code)
+    Project: [FastAPI-Online-Shop](https://github.com/vladelo-code/FastAPI-Online-Shop)
 
