@@ -1,86 +1,152 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status, Depends
-from typing import Optional
+from fastapi import HTTPException, status
+from typing import List
 
-from app import db
 from app.cart import shema
 from app.products.models import Product
+from app.user import validator
 from app.user.models import User
 from app.cart.models import Cart, CartItems
 
 
-async def add_items(cart_id, product_id, database: Session = Depends(db.get_db)) -> None:
-    """
-    Добавляет товар в корзину.
-
-    :param cart_id: ID корзины, в которую добавляется товар.
-    :param product_id: ID добавляемого товара.
-    :param database: Сессия базы данных.
-    """
-    cart_items = CartItems(cart_id=cart_id, product_id=product_id)
-    database.add(cart_items)
+async def add_items(cart_id: int, product_id: int, database: Session) -> None:
+    cart_item = CartItems(cart_id=cart_id, product_id=product_id)
+    database.add(cart_item)
     database.commit()
-    database.refresh(cart_items)
+    database.refresh(cart_item)
 
 
-async def add_product_to_cart(product_id, current_user, database: Session = Depends(db.get_db)) -> dict:
-    """
-    Добавляет товар в корзину текущего пользователя.
-    Если корзина отсутствует, создаётся новая.
+async def add_product_to_cart(product_id: int, current_user: User, database: Session) -> dict:
+    product = database.get(Product, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found!")
+    if product.quantity < 1:
+        raise HTTPException(status_code=400, detail="Item out of stock!")
 
-    :param product_id: ID добавляемого товара.
-    :param current_user: Текущий аутентифицированный пользователь с полем email.
-    :param database: Сессия базы данных.
-    :raises HTTPException: При отсутствии товара или отсутствии доступного количества.
-    :return: Словарь со статусом успешного добавления.
-    """
-    product_info = database.get(Product, product_id)
+    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found!")
 
-    if not product_info:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found!")
-
-    if product_info.quantity < 1:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item out of stock!")
-
-    user_info = database.query(User).filter(User.email == current_user.email).first()
-
-    cart_info = database.query(Cart).filter(Cart.user_id == user_info.id).first()
-
-    if not cart_info:
-        new_cart = Cart(user_id=user_info.id)
-        database.add(new_cart)
+    cart = database.query(Cart).filter(Cart.user_id == user.id).first()
+    if not cart:
+        cart = Cart(user_id=user.id)
+        database.add(cart)
         database.commit()
-        database.refresh(new_cart)
-        await add_items(new_cart.id, product_info.id, database)
-    else:
-        await add_items(cart_info.id, product_info.id, database)
+        database.refresh(cart)
 
+    await add_items(cart.id, product.id, database)
     return {"status": "Item added to cart!"}
 
 
-async def get_all_items(current_user, database: Session) -> Optional[shema.ShowCart]:
-    """
-    Получает корзину текущего пользователя.
+async def add_multiple_products_to_cart(
+    items: List[int], current_user: User, database: Session
+) -> dict:
+    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found!")
 
-    :param current_user: Текущий аутентифицированный пользователь с полем email.
-    :param database: Сессия базы данных.
-    :return: Объект корзины пользователя.
-    """
-    user_info = database.query(User).filter(User.email == current_user.email).first()
-    cart = database.query(Cart).filter(Cart.user_id == user_info.id).first()
-    return cart
+    cart = database.query(Cart).filter(Cart.user_id == user.id).first()
+    if not cart:
+        cart = Cart(user_id=user.id)
+        database.add(cart)
+        database.commit()
+        database.refresh(cart)
+
+    added = []
+    not_found = []
+    out_of_stock = []
+
+    for product_id in items:
+        product = database.get(Product, product_id)
+        if not product:
+            not_found.append(product_id)
+            continue
+        if product.quantity < 1:
+            out_of_stock.append(product_id)
+            continue
+        await add_items(cart.id, product_id, database)
+        added.append(product_id)
+
+    return {
+        "status": "Items processed",
+        "added": added,
+        "not_found": not_found,
+        "out_of_stock": out_of_stock
+    }
 
 
-async def remove_cart_item(cart_item_id: int, current_user, database: Session) -> None:
-    """
-    Удаляет товар из корзины текущего пользователя.
+async def get_all_items(current_user: User, database: Session) -> shema.ShowCart:
+    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found!")
 
-    :param cart_item_id: ID позиции в корзине, которую нужно удалить.
-    :param current_user: Текущий аутентифицированный пользователь с полем email.
-    :param database: Сессия базы данных.
-    """
-    user_info = database.query(User).filter(User.email == current_user.email).first()
-    cart_id = database.query(Cart).filter(User.id == user_info.id).first()
-    database.query(CartItems).filter(CartItems.id == cart_item_id, CartItems.cart_id == cart_id.id).delete()
+    cart = database.query(Cart).filter(Cart.user_id == user.id).first()
+    if not cart:
+        return shema.ShowCart(id=0, cart_items=[], total_price=0.0)
+
+    # Подсчёт стоимости
+    total = 0.0
+    items_schema = []
+    for item in cart.cart_items:
+        if item.products:
+            total += item.products.price
+        items_schema.append(
+            shema.ShowCartItems(
+                id=item.id,
+                products=item.products,
+                created_date=item.created_date
+            )
+        )
+
+    return shema.ShowCart(
+        id=cart.id,
+        cart_items=items_schema,
+        total_price=total
+    )
+
+
+async def remove_cart_item(cart_item_id: int, current_user: User, database: Session) -> None:
+    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found!")
+
+    cart = database.query(Cart).filter(Cart.user_id == user.id).first()
+    if not cart:
+        raise HTTPException(status_code=404, detail="Cart not found!")
+
+    item = database.query(CartItems).filter(
+        CartItems.id == cart_item_id,
+        CartItems.cart_id == cart.id
+    ).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Cart item not found!")
+
+    database.delete(item)
     database.commit()
-    return None
+
+
+async def clear_cart(current_user: User, database: Session) -> None:
+    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found!")
+
+    cart = database.query(Cart).filter(Cart.user_id == user.id).first()
+    if cart:
+        database.query(CartItems).filter(CartItems.cart_id == cart.id).delete()
+        database.commit()
+
+
+async def get_cart_total_price(current_user: User, database: Session) -> float:
+    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found!")
+
+    cart = database.query(Cart).filter(Cart.user_id == user.id).first()
+    if not cart:
+        return 0.0
+
+    total = 0.0
+    for item in cart.cart_items:
+        if item.products:
+            total += item.products.price
+    return total

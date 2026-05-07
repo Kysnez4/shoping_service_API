@@ -16,5 +16,10 @@ class ShowCartItems(BaseModel):
 class ShowCart(BaseModel):
     id: int
     cart_items: List[ShowCartItems] = []
+    total_price: float = 0.0
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AddMultipleItemsRequest(BaseModel):
+    items: List[int]
