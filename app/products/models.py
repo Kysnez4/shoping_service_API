@@ -1,4 +1,15 @@
-from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    Text,
+    ForeignKey,
+    DateTime,
+    Boolean,
+)
 from sqlalchemy.orm import relationship
 
 from app.db import Base
@@ -20,8 +31,12 @@ class Product(Base):
     name = Column(String(50))
     quantity = Column(Integer)
     description = Column(Text)
-    price = Column(Float)
+    price = Column(Integer)
     category_id = Column(Integer, ForeignKey("category.id", ondelete="CASCADE"))
     category = relationship("Category", back_populates="products")
     cart_items = relationship("CartItems", back_populates="products")
     order_details = relationship("OrderDetails", back_populates="product_order_details")
+
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    is_active = Column(Boolean)

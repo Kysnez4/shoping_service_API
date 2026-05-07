@@ -1,8 +1,7 @@
 from typing import List
 from fastapi import HTTPException
 
-from app.products import models
-
+from app.products import models, shema
 
 async def create_new_category(request, database) -> models.Category:
     """
@@ -111,3 +110,20 @@ async def delete_product_by_id(product_id, database) -> None:
     """
     database.query(models.Product).filter(models.Product.id == product_id).delete()
     database.commit()
+
+
+async def update_product_by_id(
+    product_id: int, request: shema.ProductUpdate, database
+) -> models.Product:
+    """
+    Обновляет товар по ID. Позволяет обновлять любые поля.
+    """
+    product = await get_product_by_id(product_id, database)
+
+    update_data = request.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(product, field, value)
+
+    database.commit()
+    database.refresh(product)
+    return product
