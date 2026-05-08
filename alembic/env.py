@@ -13,7 +13,7 @@ fileConfig(config.config_file_name)
 
 from app import config as config_env
 from app.db import Base
-from app.user.models import User
+from app.user.models import User, Role
 from app.products.models import Category, Product
 from app.cart.models import Cart, CartItems
 from app.orders.models import Order, OrderDetails

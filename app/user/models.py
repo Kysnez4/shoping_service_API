@@ -38,7 +38,9 @@ class User(Base):
         self.role_id = role_id
 
     def check_password(self, password):
-        return hashing.verify_password(self.password, password)
+        return hashing.verify_password(
+            password, self.password
+        )
 
     @property
     def is_admin(self):
