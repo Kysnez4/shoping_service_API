@@ -124,11 +124,4 @@ pytest
 
 Файл `.env.template` для всех необходимых переменных.
 
-## 📬 **Контакты**
-
-это форк проекта: 
-    
-    Автор: Владислав Лахтионов
-    GitHub: [vladelo-code](https://github.com/vladelo-code)
-    Project: [FastAPI-Online-Shop](https://github.com/vladelo-code/FastAPI-Online-Shop)
 
