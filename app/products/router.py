@@ -14,7 +14,7 @@ router = APIRouter(tags=["Categories & products"], prefix="/products")
 async def create_category(
     request: shema.Category,
     database: Session = Depends(db.get_db),
-    current_user: User = Depends(jwt.get_current_user),
+    current_user: User = Depends(jwt.get_admin),
 ):
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin rights required")
@@ -50,7 +50,7 @@ async def get_category_by_id(
 async def delete_category(
     category_id: int,
     database: Session = Depends(db.get_db),
-    current_user: User = Depends(jwt.get_current_user),
+    current_user: User = Depends(jwt.get_admin),
 ) -> None:
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin rights required")
@@ -65,7 +65,7 @@ async def delete_category(
 async def create_product(
     request: shema.ProductCreate,
     database: Session = Depends(db.get_db),
-    current_user: User = Depends(jwt.get_current_user),
+    current_user: User = Depends(jwt.get_admin),
 ):
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin rights required")
@@ -104,7 +104,7 @@ async def get_product_by_id(
 async def delete_product(
     product_id: int,
     database: Session = Depends(db.get_db),
-    current_user: User = Depends(jwt.get_current_user),
+    current_user: User = Depends(jwt.get_admin),
 ) -> None:
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin rights required")
@@ -117,7 +117,7 @@ async def update_product(
     product_id: int,
     request: shema.ProductUpdate,
     database: Session = Depends(db.get_db),
-    current_user: User = Depends(jwt.get_current_user),
+    current_user: User = Depends(jwt.get_admin),
 ):
     """Полное или частичное обновление товара (только для администратора)."""
     if not current_user.is_admin:
