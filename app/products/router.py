@@ -108,10 +108,11 @@ async def delete_product(
 ) -> None:
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin rights required")
+
     return await services.delete_product_by_id(product_id, database)
 
 
-@router.put("/{product_id}", response_model=shema.DisplayProduct)
+@router.patch("/{product_id}", response_model=shema.DisplayProduct)
 async def update_product(
     product_id: int,
     request: shema.ProductUpdate,
