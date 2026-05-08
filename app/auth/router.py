@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from typing import List
 
 from app import db
 from app.user import hashing
 from app.user.models import User
 from app.auth import jwt
+from app.products import models as product_models
+from app.products.shema import DisplayProduct
 
 router = APIRouter(tags=["Authentication"])
 
@@ -15,7 +18,13 @@ async def login(
     request: OAuth2PasswordRequestForm = Depends(),
     database: Session = Depends(db.get_db),
 ):
-    user = database.query(User).filter(User.email == request.username).first()
+    username = request.username.strip()
+    user = None
+
+    if "@" in username and "." in username:
+        user = database.query(User).filter(User.email == username).first()
+    else:
+        user = database.query(User).filter(User.phone == username).first()
 
     if not user:
         raise HTTPException(

@@ -23,7 +23,7 @@ async def add_product_to_cart(product_id: int, current_user: User, database: Ses
     if product.quantity < 1:
         raise HTTPException(status_code=400, detail="Item out of stock!")
 
-    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    user = await validator.verify_email_exist(current_user.email, database)
     if not user:
         raise HTTPException(status_code=404, detail="User not found!")
 
@@ -41,7 +41,7 @@ async def add_product_to_cart(product_id: int, current_user: User, database: Ses
 async def add_multiple_products_to_cart(
     items: List[int], current_user: User, database: Session
 ) -> dict:
-    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    user = await validator.verify_email_exist(current_user.email, database)
     if not user:
         raise HTTPException(status_code=404, detail="User not found!")
 
@@ -76,7 +76,7 @@ async def add_multiple_products_to_cart(
 
 
 async def get_all_items(current_user: User, database: Session) -> shema.ShowCart:
-    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    user = await validator.verify_email_exist(current_user.email, database)
     if not user:
         raise HTTPException(status_code=404, detail="User not found!")
 
@@ -106,7 +106,7 @@ async def get_all_items(current_user: User, database: Session) -> shema.ShowCart
 
 
 async def remove_cart_item(cart_item_id: int, current_user: User, database: Session) -> None:
-    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    user = await validator.verify_email_exist(current_user.email, database)
     if not user:
         raise HTTPException(status_code=404, detail="User not found!")
 
@@ -126,7 +126,7 @@ async def remove_cart_item(cart_item_id: int, current_user: User, database: Sess
 
 
 async def clear_cart(current_user: User, database: Session) -> None:
-    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    user = await validator.verify_email_exist(current_user.email, database)
     if not user:
         raise HTTPException(status_code=404, detail="User not found!")
 
@@ -137,7 +137,7 @@ async def clear_cart(current_user: User, database: Session) -> None:
 
 
 async def get_cart_total_price(current_user: User, database: Session) -> float:
-    user = await validator.verify_email_exist(email=current_user.email, db=database)
+    user = await validator.verify_email_exist(current_user.email, database)
     if not user:
         raise HTTPException(status_code=404, detail="User not found!")
 
