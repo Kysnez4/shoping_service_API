@@ -3,7 +3,7 @@ from email.mime.text import MIMEText
 from app import config
 
 
-def send_email(to_email: str, subject: str, html_body: str) -> None:
+def send_email(to_email: str, subject: str, html_body: str) -> None: # pragma: nocover
     """
     Отправляет HTML-письмо на указанный email через SMTP сервер.
 

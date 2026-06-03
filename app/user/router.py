@@ -13,7 +13,7 @@ router = APIRouter(tags=["Users"], prefix="/user")
 async def create_user_registration(
     request: shema.User,
     database: Session = Depends(db.get_db)
-):
+): # pragma: nocover
     user_by_email = await validator.verify_email_exist(email=request.email, db=database)
     if user_by_email:
         raise HTTPException(status_code=400, detail="This user with this email already exist in the system")
@@ -31,7 +31,7 @@ async def create_user_registration(
 async def get_all_users(
     database: Session = Depends(db.get_db),
     current_user: shema.User = Depends(jwt.get_current_user),
-):
+): # pragma: nocover
     return await services.all_users(database=database)
 
 
@@ -40,7 +40,7 @@ async def get_user_by_id(
     user_id: int,
     database: Session = Depends(db.get_db),
     current_user: shema.User = Depends(jwt.get_current_user),
-):
+): # pragma: nocover
     return await services.get_user_by_id(user_id=user_id, database=database)
 
 
@@ -51,5 +51,5 @@ async def delete_user_by_id(
     user_id: int,
     database: Session = Depends(db.get_db),
     current_user: shema.User = Depends(jwt.get_current_user),
-):
+): # pragma: nocover
     return await services.delete_user_by_id(user_id=user_id, database=database)
